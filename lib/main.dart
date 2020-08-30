@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 
-import 'widgets/new_transaction.dart';
-import 'widgets/transaction_list.dart';
-import 'models/transaction.dart';
+import './widgets/chart.dart';
+import './widgets/new_transaction.dart';
+import './widgets/transaction_list.dart';
+import './models/transaction.dart';
 
 void main() => runApp(MyApp());
 
@@ -10,10 +11,11 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      debugShowCheckedModeBanner: false,
       title: 'Expenses control',
       theme: ThemeData(
         primarySwatch: Colors.purple,
-        accentColor: Colors.amber,
+        accentColor: Colors.green[300],
         fontFamily: 'Quicksand',
         textTheme: ThemeData.light().textTheme.copyWith(
           headline6: TextStyle(
@@ -21,6 +23,7 @@ class MyApp extends StatelessWidget {
             fontWeight: FontWeight.bold,
             fontSize: 18,
           ),
+          button: TextStyle(color: Colors.white),
         ),
         appBarTheme: AppBarTheme(
           textTheme: ThemeData.light().textTheme.copyWith(
@@ -43,27 +46,22 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  final List<Transaction> _userTransaction = [
-    //Transaction(
-      //id: 't1',
-      //title: 'New shoes',
-      //amount: 69.99,
-      //date: DateTime.now(),
-    //),
-    //Transaction(
-      //id: 't2',
-      //title: 'Weekly Groceries',
-      //amount: 16.53,
-      //date: DateTime.now(),
-    //),
-  ];
+  final List<Transaction> _userTransaction = [];
 
-  void _addNewTransaction(String title, double amount) {
+  List<Transaction> get _recentTransactions {
+    return _userTransaction.where((tx) {
+      return tx.date.isAfter(DateTime.now().subtract(Duration(days: 7),
+        ),
+      );
+    }).toList();
+  }
+
+  void _addNewTransaction(String title, double amount, DateTime chosenDate) {
     final newTransaction = Transaction(
       id: DateTime.now().toString(),
       title: title,
       amount: amount,
-      date: DateTime.now(),
+      date: chosenDate,
     );
 
     setState(() {
@@ -84,6 +82,12 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
+  void _deleteTransaction(String id) {
+    setState(() {
+      _userTransaction.removeWhere((tx) => tx.id == id);
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -101,20 +105,12 @@ class _MyHomePageState extends State<MyHomePage> {
           //mainAxisAlignment: MainAxisAlignment.spaceAround,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: <Widget>[
-            Container(
-              child: Card(
-                child: Text('CHART'),
-                elevation: 5,
-                color: Theme.of(context).primaryColor,
-              ),
-              width: double.infinity,
-              height: 100,
-            ),
-            TransactionList(_userTransaction),
+            Chart(_recentTransactions),
+            TransactionList(_userTransaction, _deleteTransaction),
           ],
         ),
       ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       floatingActionButton: FloatingActionButton(
         child: Icon(Icons.add),
         onPressed: () => _startAddNewTransaction(context),
